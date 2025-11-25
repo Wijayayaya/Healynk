@@ -1,0 +1,110 @@
+package com.example.healynk.ui.screens
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.healynk.utils.Constants
+import com.example.healynk.viewmodel.UiState
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.example.healynk.models.Measurement
+import com.example.healynk.models.ActivityEntry
+import com.example.healynk.models.FoodEntry
+
+@Composable
+fun MainShell(
+    uiState: UiState,
+    onAddMeasurement: () -> Unit,
+    onAddActivity: () -> Unit,
+    onAddFood: () -> Unit,
+    onSignOut: () -> Unit,
+    onRemovePin: () -> Unit,
+    onDeleteMeasurement: (String) -> Unit,
+    onDeleteActivity: (String) -> Unit,
+    onDeleteFood: (String) -> Unit,
+    onRestoreMeasurement: (Measurement) -> Unit,
+    onRestoreActivity: (ActivityEntry) -> Unit,
+    onRestoreFood: (FoodEntry) -> Unit
+) {
+    val navController = rememberNavController()
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentDestination = navBackStackEntry?.destination?.route
+                val items = listOf(
+                    NavItem(Constants.ROUTE_HOME, "Home", Icons.Default.Home),
+                    NavItem(Constants.ROUTE_HISTORY, "History", Icons.Default.History),
+                    NavItem(Constants.ROUTE_ANALYTICS, "Analytics", Icons.Default.Analytics),
+                    NavItem(Constants.ROUTE_SETTINGS, "Settings", Icons.Default.Settings)
+                )
+                items.forEach { item ->
+                    NavigationBarItem(
+                        selected = currentDestination == item.route,
+                        onClick = {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = { Text(item.label) }
+                    )
+                }
+            }
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = Constants.ROUTE_HOME,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+            composable(Constants.ROUTE_HOME) {
+                HomeScreen(
+                    uiState = uiState,
+                    onAddMeasurement = onAddMeasurement,
+                    onAddActivity = onAddActivity,
+                    onAddFood = onAddFood
+                )
+            }
+            composable(Constants.ROUTE_HISTORY) {
+                HistoryScreen(
+                    uiState = uiState,
+                    onDeleteMeasurement = onDeleteMeasurement,
+                    onDeleteActivity = onDeleteActivity,
+                    onDeleteFood = onDeleteFood,
+                    onRestoreMeasurement = onRestoreMeasurement,
+                    onRestoreActivity = onRestoreActivity,
+                    onRestoreFood = onRestoreFood
+                )
+            }
+            composable(Constants.ROUTE_ANALYTICS) {
+                AnalyticsScreen(uiState = uiState)
+            }
+            composable(Constants.ROUTE_SETTINGS) {
+                SettingsScreen(uiState = uiState, onSignOut = onSignOut, onRemovePin = onRemovePin)
+            }
+        }
+    }
+}
+
+private data class NavItem(val route: String, val label: String, val icon: ImageVector)
