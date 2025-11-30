@@ -32,9 +32,10 @@ fun AddActivityScreen(
 ) {
     var type by remember { mutableStateOf(Constants.ACTIVITY_TYPES.first()) }
     var duration by remember { mutableStateOf("") }
-    var steps by remember { mutableStateOf("") }
-    var calories by remember { mutableStateOf("") }
+    var distance by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+
+    val isDistanceBased = type in Constants.DISTANCE_BASED_TYPES
 
     Column(
         modifier = Modifier
@@ -51,19 +52,35 @@ fun AddActivityScreen(
             modifier = Modifier.fillMaxWidth()
         )
         NumberTextField(value = duration, onValueChange = { duration = it }, label = "Durasi (menit)", modifier = Modifier.fillMaxWidth())
-        NumberTextField(value = steps, onValueChange = { steps = it }, label = "Langkah", modifier = Modifier.fillMaxWidth())
-        NumberTextField(value = calories, onValueChange = { calories = it }, label = "Kalori terbakar", modifier = Modifier.fillMaxWidth())
+        if (isDistanceBased) {
+            NumberTextField(
+                value = distance,
+                onValueChange = { distance = it },
+                label = "Jarak (km)",
+                allowDecimal = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         TextAreaField(value = notes, onValueChange = { notes = it }, label = "Catatan")
         Spacer(modifier = Modifier.height(8.dp))
         RowButtons(
             onCancel = onCancel,
             onSave = {
+                val durationMinutes = duration.toIntOrNull()
+                val distanceKm = distance.toDoubleOrNull()
+                val pace = if (isDistanceBased && durationMinutes != null && durationMinutes > 0 && distanceKm != null && distanceKm > 0.0) {
+                    durationMinutes.toDouble() / distanceKm
+                } else null
+                val calories = if (isDistanceBased && distanceKm != null) {
+                    (Constants.caloriesPerKmFor(type) * distanceKm).toInt()
+                } else null
                 onSave(
                     ActivityEntry(
                         type = type,
-                        durationMinutes = duration.toIntOrNull(),
-                        steps = steps.toIntOrNull(),
-                        caloriesBurned = calories.toIntOrNull(),
+                        durationMinutes = durationMinutes,
+                        distanceKm = distanceKm,
+                        pace = pace,
+                        caloriesBurned = calories,
                         notes = notes.ifBlank { null }
                     )
                 )

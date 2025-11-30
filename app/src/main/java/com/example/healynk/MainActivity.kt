@@ -9,7 +9,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -18,7 +17,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.healynk.services.AuthService
 import com.example.healynk.services.FirebaseService
 import com.example.healynk.services.PinService
+import com.example.healynk.services.ProfilePhotoStorageService
+import com.example.healynk.services.UserPreferences
 import com.example.healynk.ui.screens.AddActivityScreen
+import com.example.healynk.ui.screens.AddBodyStatsScreen
 import com.example.healynk.ui.screens.AddFoodScreen
 import com.example.healynk.ui.screens.AddMeasurementScreen
 import com.example.healynk.ui.screens.AnalyticsScreen
@@ -41,7 +43,9 @@ class MainActivity : ComponentActivity() {
         UiViewModel.factory(
             AuthService(),
             FirebaseService(),
-            PinService(applicationContext)
+            PinService(applicationContext),
+            ProfilePhotoStorageService(applicationContext),
+            UserPreferences(applicationContext)
         )
     }
 
@@ -108,8 +112,14 @@ fun HealynkNavHost(navController: NavHostController, viewModel: UiViewModel) {
         composable(Constants.ROUTE_REGISTER) {
             RegisterScreen(
                 onRegister = viewModel::register,
-                onNavigateLogin = { navController.navigate(Constants.ROUTE_LOGIN) },
-                errorMessage = uiState.error
+                onNavigateLogin = {
+                    navController.navigate(Constants.ROUTE_LOGIN) {
+                        popUpTo(Constants.ROUTE_REGISTER) { inclusive = true }
+                    }
+                },
+                onRegistrationConsumed = viewModel::consumeRegistrationSuccess,
+                errorMessage = uiState.error,
+                registrationSuccess = uiState.registrationSuccess
             )
         }
         composable(Constants.ROUTE_PIN_SETUP) {
@@ -139,6 +149,7 @@ fun HealynkNavHost(navController: NavHostController, viewModel: UiViewModel) {
             MainShell(
                 uiState = uiState,
                 onAddMeasurement = { navController.navigate(Constants.ROUTE_ADD_MEASUREMENT) },
+                onAddBodyStats = { navController.navigate(Constants.ROUTE_ADD_BODY_STATS) },
                 onAddActivity = { navController.navigate(Constants.ROUTE_ADD_ACTIVITY) },
                 onAddFood = { navController.navigate(Constants.ROUTE_ADD_FOOD) },
                 onSignOut = {
@@ -148,12 +159,18 @@ fun HealynkNavHost(navController: NavHostController, viewModel: UiViewModel) {
                     }
                 },
                 onRemovePin = viewModel::removePin,
+                onUpdateDisplayName = viewModel::updateDisplayName,
+                onUpdatePhotoUrl = viewModel::updatePhotoUrl,
+                onUpdateEmail = viewModel::updateEmail,
+                onUpdatePassword = viewModel::updatePassword,
                 onDeleteMeasurement = viewModel::deleteMeasurement,
                 onDeleteActivity = viewModel::deleteActivity,
                 onDeleteFood = viewModel::deleteFood,
                 onRestoreMeasurement = viewModel::addMeasurement,
                 onRestoreActivity = viewModel::addActivity,
-                onRestoreFood = viewModel::addFood
+                onRestoreFood = viewModel::addFood,
+                onUploadPhoto = viewModel::uploadProfilePhoto,
+                onUpdateBurnGoal = viewModel::updateBurnGoal
             )
         }
         addFormDestinations(navController, viewModel)
@@ -183,6 +200,15 @@ private fun NavGraphBuilder.addFormDestinations(navController: NavHostController
         AddFoodScreen(
             onSave = {
                 viewModel.addFood(it)
+                navController.popBackStack()
+            },
+            onCancel = { navController.popBackStack() }
+        )
+    }
+    composable(Constants.ROUTE_ADD_BODY_STATS) {
+        AddBodyStatsScreen(
+            onSave = {
+                viewModel.addBodyStats(it)
                 navController.popBackStack()
             },
             onCancel = { navController.popBackStack() }

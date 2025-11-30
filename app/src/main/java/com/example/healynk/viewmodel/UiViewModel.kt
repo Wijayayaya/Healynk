@@ -1,5 +1,6 @@
 package com.example.healynk.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,8 @@ import com.example.healynk.services.AuthService
 import com.example.healynk.services.FirebaseService
 import com.example.healynk.services.PinResult
 import com.example.healynk.services.PinService
+import com.example.healynk.services.ProfilePhotoStorageService
+import com.example.healynk.services.UserPreferences
 import com.example.healynk.utils.Constants
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +34,9 @@ import java.util.UUID
 class UiViewModel(
     private val authService: AuthService,
     private val firebaseService: FirebaseService,
-    private val pinService: PinService
+    private val pinService: PinService,
+    private val profilePhotoStorageService: ProfilePhotoStorageService,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val zoneId: ZoneId = ZoneId.systemDefault()
@@ -51,16 +56,29 @@ class UiViewModel(
         _uiState.value = _uiState.value.copy(
             isAuthenticated = userId != null,
             hasPin = userId?.let { pinService.hasPin(it) } ?: false,
-            userEmail = email
+            userEmail = email,
+            displayName = authService.currentUserDisplayName.orEmpty(),
+            photoUrl = authService.currentUserPhotoUrl
         )
     }
 
     fun register(email: String, password: String) = viewModelScope.launch {
         runCatching { authService.register(email, password) }
             .onSuccess {
-                _uiState.value = _uiState.value.copy(isAuthenticated = true, error = null)
+                authService.logout()
+                _uiState.update { state ->
+                    state.copy(
+                        isAuthenticated = false,
+                        hasPin = false,
+                        pinVerified = false,
+                        registrationSuccess = true,
+                        error = null
+                    )
+                }
             }
-            .onFailure { _uiState.value = _uiState.value.copy(error = it.message) }
+            .onFailure {
+                _uiState.update { state -> state.copy(error = it.message, registrationSuccess = false) }
+            }
     }
 
     fun login(email: String, password: String) = viewModelScope.launch {
@@ -72,6 +90,8 @@ class UiViewModel(
     }
 
     fun signOut() {
+        val userId = authService.currentUserId
+        userId?.let(pinService::removePin)
         authService.logout()
         _uiState.value = UiState()
     }
@@ -87,6 +107,10 @@ class UiViewModel(
             pinService.removePin(uid)
             _uiState.update { it.copy(hasPin = false, pinVerified = false) }
         }
+    }
+
+    fun consumeRegistrationSuccess() {
+        _uiState.update { it.copy(registrationSuccess = false) }
     }
 
     fun setPin(pin: String) {
@@ -149,7 +173,29 @@ class UiViewModel(
         dataJob = viewModelScope.launch {
             authService.authState().collectLatest { isLoggedIn ->
                 if (!isLoggedIn) {
-                    _uiState.value = UiState()
+                    _uiState.update { state ->
+                        state.copy(
+                            isAuthenticated = false,
+                            hasPin = false,
+                            pinVerified = false,
+                            measurements = emptyList(),
+                            activities = emptyList(),
+                            foods = emptyList(),
+                            dailyCalories = 0,
+                            dailyActivityCalories = 0,
+                            latestMeasurement = null,
+                            latestBmi = null,
+                            weightTrend = emptyList(),
+                            bloodPressureTrend = emptyList(),
+                            glucoseTrend = emptyList(),
+                            weeklyFoodChart = emptyList(),
+                            weeklyActivityChart = emptyList(),
+                            summaryDistanceKm = 0.0,
+                            summaryDuration = 0,
+                            userEmail = "",
+                            dailyCaloriesGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL)
+                        )
+                    }
                     return@collectLatest
                 }
                 val userId = authService.currentUserId ?: return@collectLatest
@@ -163,6 +209,10 @@ class UiViewModel(
                     val groupedMeasurements = measurements.groupByDay()
                     val groupedFoods = foods.groupFoodDayCalories()
                     val groupedActivities = activities.groupActivityDayCalories()
+                    val latestBodyStat = measurements
+                        .filter { it.weightKg != null && it.heightCm != null }
+                        .maxByOrNull { it.timestamp }
+                    val bmi = calculateBmi(latestBodyStat?.weightKg, latestBodyStat?.heightCm)
                     UiState(
                         isAuthenticated = true,
                         hasPin = pinService.hasPin(userId),
@@ -172,17 +222,20 @@ class UiViewModel(
                         foods = foods,
                         dailyCalories = todayFoods.sumOf { it.calories },
                         dailyActivityCalories = todayActivities.sumOf { it.caloriesBurned ?: 0 },
-                        dailyCaloriesGoal = Constants.DAILY_CALORIE_GOAL,
+                        dailyCaloriesGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL),
                         latestMeasurement = measurements.maxByOrNull { it.timestamp },
+                        latestBmi = bmi,
                         weightTrend = groupedMeasurements.weightTrend(),
                         bloodPressureTrend = groupedMeasurements.bloodPressureTrend(),
                         glucoseTrend = groupedMeasurements.glucoseTrend(),
                         weeklyFoodChart = groupedFoods,
                         weeklyActivityChart = groupedActivities,
-                        summarySteps = todayActivities.sumOf { it.steps ?: 0 },
+                        summaryDistanceKm = todayActivities.sumOf { it.distanceKm ?: 0.0 },
                         summaryDuration = todayActivities.sumOf { it.durationMinutes ?: 0 },
                         error = null,
-                        userEmail = authService.currentUserEmail.orEmpty()
+                        userEmail = authService.currentUserEmail.orEmpty(),
+                        displayName = authService.currentUserDisplayName.orEmpty(),
+                        photoUrl = authService.currentUserPhotoUrl
                     )
                 }.collectLatest { newState ->
                     _uiState.value = newState
@@ -234,16 +287,71 @@ class UiViewModel(
             .sortedBy { LocalDate.parse(it.first, dayFormatter) }
             .takeLast(7)
 
+    private fun calculateBmi(weightKg: Double?, heightCm: Double?): Double? {
+        if (weightKg == null || heightCm == null || heightCm == 0.0) return null
+        val heightM = heightCm / 100.0
+        if (heightM <= 0) return null
+        return weightKg / (heightM * heightM)
+    }
+
     companion object {
         fun factory(
             authService: AuthService,
             firebaseService: FirebaseService,
-            pinService: PinService
+            pinService: PinService,
+            profilePhotoStorageService: ProfilePhotoStorageService,
+            userPreferences: UserPreferences
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                UiViewModel(authService, firebaseService, pinService)
+                UiViewModel(authService, firebaseService, pinService, profilePhotoStorageService, userPreferences)
             }
         }
+    }
+
+    fun updateDisplayName(name: String) = viewModelScope.launch {
+        runCatching { authService.updateDisplayName(name.trim()) }
+            .onSuccess {
+                _uiState.update { it.copy(displayName = name.trim(), error = null) }
+            }
+            .onFailure { throwable -> _uiState.update { state -> state.copy(error = throwable.message ?: "Gagal update nama") } }
+    }
+
+    fun updatePhotoUrl(photoUrl: String?) = viewModelScope.launch {
+        runCatching { authService.updatePhotoUrl(photoUrl) }
+            .onSuccess { _uiState.update { it.copy(photoUrl = photoUrl, error = null) } }
+            .onFailure { throwable -> _uiState.update { state -> state.copy(error = throwable.message ?: "Gagal update foto") } }
+    }
+
+    fun updateEmail(newEmail: String) = viewModelScope.launch {
+        runCatching { authService.updateEmail(newEmail.trim()) }
+            .onSuccess { _uiState.update { it.copy(userEmail = newEmail.trim(), error = null) } }
+            .onFailure { throwable -> _uiState.update { state -> state.copy(error = throwable.message ?: "Gagal update email") } }
+    }
+
+    fun updatePassword(newPassword: String) = viewModelScope.launch {
+        runCatching { authService.updatePassword(newPassword) }
+            .onSuccess { _uiState.update { it.copy(error = null) } }
+            .onFailure { throwable -> _uiState.update { state -> state.copy(error = throwable.message ?: "Gagal update password") } }
+    }
+
+    fun addBodyStats(measurement: Measurement) = addMeasurement(measurement)
+
+    fun uploadProfilePhoto(photoUri: Uri) = viewModelScope.launch {
+        val userId = authService.currentUserId ?: return@launch
+        runCatching {
+            val downloadUrl = profilePhotoStorageService.uploadProfilePhoto(userId, photoUri)
+            authService.updatePhotoUrl(downloadUrl)
+            downloadUrl
+        }.onSuccess { url ->
+            _uiState.update { it.copy(photoUrl = url, error = null) }
+        }.onFailure { throwable ->
+            _uiState.update { it.copy(error = throwable.message ?: "Gagal upload foto") }
+        }
+    }
+
+    fun updateBurnGoal(goal: Int) {
+        userPreferences.setBurnGoal(goal)
+        _uiState.update { it.copy(dailyCaloriesGoal = goal) }
     }
 }
 
@@ -258,13 +366,17 @@ data class UiState(
     val dailyActivityCalories: Int = 0,
     val dailyCaloriesGoal: Int = Constants.DAILY_CALORIE_GOAL,
     val latestMeasurement: Measurement? = null,
+    val latestBmi: Double? = null,
     val weightTrend: List<Pair<String, Double>> = emptyList(),
     val bloodPressureTrend: List<Pair<String, Pair<Int?, Int?>>> = emptyList(),
     val glucoseTrend: List<Pair<String, Int?>> = emptyList(),
     val weeklyFoodChart: List<Pair<String, Int>> = emptyList(),
     val weeklyActivityChart: List<Pair<String, Int>> = emptyList(),
-    val summarySteps: Int = 0,
+    val summaryDistanceKm: Double = 0.0,
     val summaryDuration: Int = 0,
     val error: String? = null,
-    val userEmail: String = ""
+    val userEmail: String = "",
+    val displayName: String = "",
+    val photoUrl: String? = null,
+    val registrationSuccess: Boolean = false
 )

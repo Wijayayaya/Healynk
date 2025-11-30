@@ -8,69 +8,89 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     onRegister: (String, String) -> Unit,
     onNavigateLogin: () -> Unit,
-    errorMessage: String?
+    onRegistrationConsumed: () -> Unit,
+    errorMessage: String?,
+    registrationSuccess: Boolean
 ) {
     val (email, setEmail) = remember { mutableStateOf("") }
     val (password, setPassword) = remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = "Daftar akun Healynk", style = MaterialTheme.typography.headlineMedium)
-        OutlinedTextField(
-            value = email,
-            onValueChange = setEmail,
-            label = { Text("Email") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
-        )
-        OutlinedTextField(
-            value = password,
-            onValueChange = setPassword,
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-        )
-        errorMessage?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+    LaunchedEffect(registrationSuccess) {
+        if (registrationSuccess) {
+            snackbarHostState.showSnackbar("Pendaftaran berhasil, silakan login")
+            onRegistrationConsumed()
+            onNavigateLogin()
         }
-        Button(
-            onClick = { onRegister(email, password) },
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp)
+                .fillMaxSize()
+                .padding(24.dp)
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Daftar")
-        }
-        TextButton(
-            onClick = onNavigateLogin,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text("Sudah punya akun? Masuk")
+            Text(text = "Daftar akun Healynk", style = MaterialTheme.typography.headlineMedium)
+            OutlinedTextField(
+                value = email,
+                onValueChange = setEmail,
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            )
+            OutlinedTextField(
+                value = password,
+                onValueChange = setPassword,
+                label = { Text("Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            )
+            errorMessage?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+            }
+            Button(
+                onClick = { onRegister(email, password) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                Text("Daftar")
+            }
+            TextButton(
+                onClick = onNavigateLogin,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text("Sudah punya akun? Masuk")
+            }
         }
     }
 }
