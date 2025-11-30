@@ -10,7 +10,7 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.healynk" />
-                  <option name="mobileSdkAppId" value="1:361114782994:android:8f658e72f924e50a9437cb" />
+                  <option name="mobileSdkAppId" value="1:361114782994:android:3e55abdcff05910d9437cb" />
                   <option name="projectId" value="healynk-3255e" />
                   <option name="projectNumber" value="361114782994" />
                 </ConnectionSetting>

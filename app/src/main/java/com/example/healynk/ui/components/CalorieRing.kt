@@ -26,7 +26,8 @@ fun CalorieRing(
     consumed: Int,
     target: Int,
     ringColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    label: String = "Kalori Terbakar"
 ) {
     val safeTarget = if (target <= 0) 1 else target
     val progress = (consumed.toFloat() / safeTarget.toFloat()).coerceIn(0f, 1f)
@@ -65,7 +66,7 @@ fun CalorieRing(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Asupan kalori",
+                    text = label,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

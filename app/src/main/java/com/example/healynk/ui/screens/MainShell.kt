@@ -1,5 +1,6 @@
 package com.example.healynk.ui.screens
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
@@ -31,16 +32,23 @@ import com.example.healynk.models.FoodEntry
 fun MainShell(
     uiState: UiState,
     onAddMeasurement: () -> Unit,
+    onAddBodyStats: () -> Unit,
     onAddActivity: () -> Unit,
     onAddFood: () -> Unit,
     onSignOut: () -> Unit,
     onRemovePin: () -> Unit,
+    onUpdateDisplayName: (String) -> Unit,
+    onUpdatePhotoUrl: (String?) -> Unit,
+    onUpdateEmail: (String) -> Unit,
+    onUpdatePassword: (String) -> Unit,
     onDeleteMeasurement: (String) -> Unit,
     onDeleteActivity: (String) -> Unit,
     onDeleteFood: (String) -> Unit,
     onRestoreMeasurement: (Measurement) -> Unit,
     onRestoreActivity: (ActivityEntry) -> Unit,
-    onRestoreFood: (FoodEntry) -> Unit
+    onRestoreFood: (FoodEntry) -> Unit,
+    onUploadPhoto: (Uri) -> Unit,
+    onUpdateBurnGoal: (Int) -> Unit
 ) {
     val navController = rememberNavController()
     Scaffold(
@@ -82,6 +90,7 @@ fun MainShell(
                 HomeScreen(
                     uiState = uiState,
                     onAddMeasurement = onAddMeasurement,
+                    onAddBodyStats = onAddBodyStats,
                     onAddActivity = onAddActivity,
                     onAddFood = onAddFood
                 )
@@ -101,7 +110,17 @@ fun MainShell(
                 AnalyticsScreen(uiState = uiState)
             }
             composable(Constants.ROUTE_SETTINGS) {
-                SettingsScreen(uiState = uiState, onSignOut = onSignOut, onRemovePin = onRemovePin)
+                SettingsScreen(
+                    uiState = uiState,
+                    onSignOut = onSignOut,
+                    onRemovePin = onRemovePin,
+                    onUpdateDisplayName = onUpdateDisplayName,
+                    onUpdatePhotoUrl = onUpdatePhotoUrl,
+                    onUpdateEmail = onUpdateEmail,
+                    onUpdatePassword = onUpdatePassword,
+                    onUploadPhoto = onUploadPhoto,
+                    onUpdateBurnGoal = onUpdateBurnGoal
+                )
             }
         }
     }

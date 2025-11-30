@@ -19,16 +19,12 @@ import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.healynk.R
 import com.example.healynk.ui.components.CalorieRing
@@ -36,11 +32,13 @@ import com.example.healynk.ui.components.QuickActionButton
 import com.example.healynk.ui.components.SummaryCardSmall
 import com.example.healynk.utils.Constants
 import com.example.healynk.viewmodel.UiState
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
     uiState: UiState,
     onAddMeasurement: () -> Unit,
+    onAddBodyStats: () -> Unit,
     onAddActivity: () -> Unit,
     onAddFood: () -> Unit
 ) {
@@ -55,11 +53,10 @@ fun HomeScreen(
         CalorieCard(uiState)
         Spacer(modifier = Modifier.height(12.dp))
         SummaryRow(uiState)
-        Spacer(modifier = Modifier.height(8.dp))
-        QuickActionsRow(onAddMeasurement, onAddActivity, onAddFood)
+        Spacer(modifier = Modifier.height(12.dp))
+        QuickActionsRow(onAddMeasurement, onAddBodyStats, onAddActivity, onAddFood)
     }
 }
-
 @Composable
 private fun HeaderSection(uiState: UiState) {
     Row(
@@ -82,7 +79,6 @@ private fun HeaderSection(uiState: UiState) {
                 )
             }
         }
-        Icon(imageVector = Icons.Default.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -94,11 +90,12 @@ private fun CalorieCard(uiState: UiState) {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Asupan Kalori Harian", style = MaterialTheme.typography.titleMedium)
+            Text(text = "Kalori Harian yang Terbakar", style = MaterialTheme.typography.titleMedium)
             CalorieRing(
-                consumed = uiState.dailyCalories,
+                consumed = uiState.dailyActivityCalories,
                 target = uiState.dailyCaloriesGoal,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp),
+                label = "Kalori Terbakar"
             )
         }
     }
@@ -113,18 +110,28 @@ private fun SummaryRow(uiState: UiState) {
         SummaryCardSmall(
             modifier = Modifier.weight(1f),
             title = "Aktivitas fisik",
-            subtitle = "Langkah: ${uiState.summarySteps}\nDurasi: ${uiState.summaryDuration} mnt",
+            subtitle = "Jarak: ${"%.1f".format(uiState.summaryDistanceKm)} km\nDurasi: ${uiState.summaryDuration} mnt",
             icon = Icons.Default.FitnessCenter
         )
-        val measurementText = uiState.latestMeasurement?.let { latest ->
+        val bpText = uiState.latestMeasurement?.let { latest ->
             val bp = if (latest.systolic != null && latest.diastolic != null) "BP ${latest.systolic}/${latest.diastolic} mmHg" else null
             val glucose = latest.glucoseMgDl?.let { "Gula $it mg/dL" }
-            listOfNotNull(bp, glucose).ifEmpty { listOf("Belum ada data") }.joinToString(" · ")
+            val bmiValue = uiState.latestBmi
+            val bmiText = bmiValue?.let { String.format(Locale.getDefault(), "BMI %.1f", it) }
+            val bmiStatus = bmiValue?.let {
+                when {
+                    it < 18.5 -> "Berat badan rendah"
+                    it < 25 -> "Berat badan ideal"
+                    it < 30 -> "Berat badan berlebih"
+                    else -> "Obesitas"
+                }
+            }
+            listOfNotNull(bp, glucose, bmiText, bmiStatus).ifEmpty { listOf("Belum ada data") }.joinToString(" · ")
         } ?: "Belum ada data"
         SummaryCardSmall(
             modifier = Modifier.weight(1f),
             title = "Tekanan darah & gula",
-            subtitle = measurementText,
+            subtitle = bpText,
             icon = Icons.Default.HealthAndSafety
         )
     }
@@ -133,6 +140,7 @@ private fun SummaryRow(uiState: UiState) {
 @Composable
 private fun QuickActionsRow(
     onAddMeasurement: () -> Unit,
+    onAddBodyStats: () -> Unit,
     onAddActivity: () -> Unit,
     onAddFood: () -> Unit
 ) {
@@ -148,7 +156,8 @@ private fun QuickActionsRow(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             items(
                 listOf(
-                    Triple("Pengukuran", Icons.Default.HealthAndSafety, onAddMeasurement),
+                    Triple("Tinggi & berat", Icons.Default.MonitorWeight, onAddBodyStats),
+                    Triple("Tekanan darah", Icons.Default.HealthAndSafety, onAddMeasurement),
                     Triple("Aktivitas", Icons.Default.FitnessCenter, onAddActivity),
                     Triple("Makanan", Icons.Default.FoodBank, onAddFood)
                 )

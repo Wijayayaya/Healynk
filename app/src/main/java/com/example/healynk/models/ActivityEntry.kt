@@ -6,7 +6,8 @@ data class ActivityEntry(
     val timestamp: Long = System.currentTimeMillis(),
     val type: String = "",
     val durationMinutes: Int? = null,
-    val steps: Int? = null,
+    val distanceKm: Double? = null,
+    val pace: Double? = null,
     val caloriesBurned: Int? = null,
     val notes: String? = null
 ) {
@@ -16,7 +17,8 @@ data class ActivityEntry(
         "timestamp" to timestamp,
         "type" to type,
         "durationMinutes" to durationMinutes,
-        "steps" to steps,
+        "distanceKm" to distanceKm,
+        "pace" to pace,
         "caloriesBurned" to caloriesBurned,
         "notes" to notes
     )
@@ -28,7 +30,8 @@ data class ActivityEntry(
             timestamp = (data["timestamp"] as? Number)?.toLong() ?: 0L,
             type = data["type"] as? String ?: "",
             durationMinutes = (data["durationMinutes"] as? Number)?.toInt(),
-            steps = (data["steps"] as? Number)?.toInt(),
+            distanceKm = (data["distanceKm"] as? Number)?.toDouble(),
+            pace = (data["pace"] as? Number)?.toDouble(),
             caloriesBurned = (data["caloriesBurned"] as? Number)?.toInt(),
             notes = data["notes"] as? String
         )
