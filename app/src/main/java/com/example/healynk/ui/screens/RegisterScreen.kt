@@ -97,14 +97,14 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(40.dp))
 
                     Text(
-                        text = "Hello!",
+                        text = "Hallo!",
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Welcome to Healynk",
+                        text = "Selamat Datang di Healynk",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White.copy(alpha = 0.95f)
                     )
@@ -126,7 +126,7 @@ fun RegisterScreen(
                     ) {
                 Column {
                         Text(
-                            text = "Sign Up",
+                            text = "Daftar Akun",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF00897B),
@@ -254,13 +254,13 @@ fun RegisterScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Already have an account?",
+                                "Sudah Memiliki Akun?",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray
                             )
                             TextButton(onClick = onNavigateLogin) {
                                 Text(
-                                    "Login",
+                                    "Masuk",
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF00897B)
                                 )

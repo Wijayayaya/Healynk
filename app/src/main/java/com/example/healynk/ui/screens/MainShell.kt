@@ -2,6 +2,7 @@ package com.example.healynk.ui.screens
 
 import android.net.Uri
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.History
@@ -9,11 +10,15 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -53,7 +58,10 @@ fun MainShell(
     val navController = rememberNavController()
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = Color.White,
+                contentColor = Color(0xFF00897B)
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination?.route
                 val items = listOf(
@@ -74,8 +82,27 @@ fun MainShell(
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(item.icon, contentDescription = item.label) },
-                        label = { Text(item.label) }
+                        icon = { 
+                            Icon(
+                                item.icon, 
+                                contentDescription = item.label,
+                                modifier = Modifier.padding(bottom = 2.dp)
+                            ) 
+                        },
+                        label = { 
+                            Text(
+                                text = item.label,
+                                fontWeight = if (currentDestination == item.route) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 12.sp
+                            ) 
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Color(0xFF00897B),
+                            selectedTextColor = Color(0xFF00897B),
+                            unselectedIconColor = Color(0xFF757575),
+                            unselectedTextColor = Color(0xFF757575),
+                            indicatorColor = Color(0xFF00897B).copy(alpha = 0.15f)
+                        )
                     )
                 }
             }
