@@ -316,7 +316,9 @@ private fun ProfileAvatar(photoUrl: String?) {
         Image(
             painter = androidx.compose.ui.res.painterResource(id = R.drawable.logo_healynk),
             contentDescription = "Avatar",
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
         )
     } else {
         AsyncImage(
