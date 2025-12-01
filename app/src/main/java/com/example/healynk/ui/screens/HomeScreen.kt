@@ -3,6 +3,7 @@ package com.example.healynk.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,8 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.FoodBank
@@ -24,8 +30,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.healynk.R
 import com.example.healynk.ui.components.CalorieRing
 import com.example.healynk.ui.components.QuickActionButton
@@ -42,42 +53,63 @@ fun HomeScreen(
     onAddActivity: () -> Unit,
     onAddFood: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF00897B),
+                        Color(0xFF26A69A)
+                    )
+                )
+            )
     ) {
-        HeaderSection(uiState)
-        Spacer(modifier = Modifier.height(12.dp))
-        CalorieCard(uiState)
-        Spacer(modifier = Modifier.height(12.dp))
-        SummaryRow(uiState)
-        Spacer(modifier = Modifier.height(12.dp))
-        QuickActionsRow(onAddMeasurement, onAddBodyStats, onAddActivity, onAddFood)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            HeaderSection(uiState)
+            Spacer(modifier = Modifier.height(20.dp))
+            CalorieCard(uiState)
+            Spacer(modifier = Modifier.height(16.dp))
+            SummaryRow(uiState)
+            Spacer(modifier = Modifier.height(16.dp))
+            QuickActionsRow(onAddMeasurement, onAddBodyStats, onAddActivity, onAddFood)
+            Spacer(modifier = Modifier.height(20.dp))
+        }
     }
 }
 @Composable
 private fun HeaderSection(uiState: UiState) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_healynk_logo),
-                contentDescription = Constants.APP_NAME,
-                modifier = Modifier.height(40.dp)
+        Image(
+            painter = painterResource(id = R.drawable.logo_healynk),
+            contentDescription = Constants.APP_NAME,
+            modifier = Modifier.size(48.dp)
+        )
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text(
+                text = Constants.APP_NAME,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontSize = 22.sp,
+                    letterSpacing = 0.5.sp
+                ),
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
             )
-            Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(text = Constants.APP_NAME, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = "Halo, ${uiState.userEmail.substringBefore('@', missingDelimiterValue = "User")}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = "Halo, ${uiState.userEmail.substringBefore('@', missingDelimiterValue = "admin")}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                fontWeight = FontWeight.Normal,
+                color = Color.White.copy(alpha = 0.95f)
+            )
         }
     }
 }
@@ -86,16 +118,23 @@ private fun HeaderSection(uiState: UiState) {
 private fun CalorieCard(uiState: UiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Kalori Harian yang Terbakar", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Kalori Harian yang Terbakar",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF00897B)
+            )
             CalorieRing(
                 consumed = uiState.dailyActivityCalories,
                 target = uiState.dailyCaloriesGoal,
                 modifier = Modifier.padding(top = 16.dp),
-                label = "Kalori Terbakar"
+                label = "Kalori Terbakar",
+                ringColor = Color(0xFF00897B)
             )
         }
     }
@@ -111,7 +150,10 @@ private fun SummaryRow(uiState: UiState) {
             modifier = Modifier.weight(1f),
             title = "Aktivitas fisik",
             subtitle = "Jarak: ${"%.1f".format(uiState.summaryDistanceKm)} km\nDurasi: ${uiState.summaryDuration} mnt",
-            icon = Icons.Default.FitnessCenter
+            icon = Icons.Default.FitnessCenter,
+            backgroundColor = Color.White,
+            titleColor = Color(0xFF00897B),
+            iconTint = Color(0xFF00897B)
         )
         val bpText = uiState.latestMeasurement?.let { latest ->
             val bp = if (latest.systolic != null && latest.diastolic != null) "BP ${latest.systolic}/${latest.diastolic} mmHg" else null
@@ -132,7 +174,10 @@ private fun SummaryRow(uiState: UiState) {
             modifier = Modifier.weight(1f),
             title = "Tekanan darah & gula",
             subtitle = bpText,
-            icon = Icons.Default.HealthAndSafety
+            icon = Icons.Default.HealthAndSafety,
+            backgroundColor = Color.White,
+            titleColor = Color(0xFF00897B),
+            iconTint = Color(0xFF00897B)
         )
     }
 }
@@ -147,13 +192,26 @@ private fun QuickActionsRow(
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "Quick actions", style = MaterialTheme.typography.titleMedium)
-            Text(text = "Lihat semua", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(
+                text = "Quick actions",
+                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                text = "Lihat semua",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.95f)
+            )
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Spacer(modifier = Modifier.height(14.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             items(
                 listOf(
                     Triple("Tinggi & berat", Icons.Default.MonitorWeight, onAddBodyStats),
@@ -162,7 +220,14 @@ private fun QuickActionsRow(
                     Triple("Makanan", Icons.Default.FoodBank, onAddFood)
                 )
             ) { (label, icon, action) ->
-                QuickActionButton(label = label, icon = icon, onClick = action)
+                QuickActionButton(
+                    label = label,
+                    icon = icon,
+                    onClick = action,
+                    buttonColor = Color.White,
+                    iconTint = Color(0xFF00897B),
+                    textColor = Color.White
+                )
             }
         }
     }

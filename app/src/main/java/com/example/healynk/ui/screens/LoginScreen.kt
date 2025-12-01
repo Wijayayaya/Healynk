@@ -87,14 +87,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
                 Text(
-                    text = "Hello!",
+                    text = "Hallo!",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Welcome to Healynk",
+                    text = "Selamat Datang di Healynk",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White.copy(alpha = 0.95f)
                 )
@@ -116,7 +116,7 @@ fun LoginScreen(
                 ) {
             Column {
                     Text(
-                        text = "Login",
+                        text = "Masuk",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF00897B),
@@ -181,7 +181,7 @@ fun LoginScreen(
                     ) {
                         TextButton(onClick = { /* TODO: Handle forgot password */ }) {
                             Text(
-                                "Forgot Password?",
+                                "Lupa Kata Sandi?",
                                 color = Color(0xFF00897B),
                                 style = MaterialTheme.typography.bodySmall
                             )
@@ -210,7 +210,7 @@ fun LoginScreen(
                         )
                     ) {
                         Text(
-                            "Login",
+                            "Masuk",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -225,13 +225,13 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Don't have an account?",
+                            "Tidak Memiliki Akun?",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Gray
                         )
                         TextButton(onClick = onNavigateRegister) {
                             Text(
-                                "Sign Up",
+                                "Daftar",
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF00897B)
                             )

@@ -2,13 +2,14 @@ package com.example.healynk.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +17,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun NumberTextField(
@@ -45,7 +48,12 @@ fun NumberTextField(
         keyboardOptions = KeyboardOptions(
             keyboardType = if (allowDecimal) KeyboardType.Decimal else KeyboardType.Number
         ),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedBorderColor = Color(0xFF00897B)
+        )
     )
 }
 
@@ -61,7 +69,12 @@ fun TextAreaField(
         onValueChange = onValueChange,
         label = { Text(label) },
         modifier = modifier.fillMaxWidth(),
-        minLines = 3
+        minLines = 3,
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedBorderColor = Color(0xFF00897B)
+        )
     )
 }
 
@@ -76,7 +89,10 @@ fun ActivityTypeDropdown(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(modifier = modifier.fillMaxWidth()) {
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
             OutlinedTextField(
                 value = selected,
                 onValueChange = {},
@@ -85,15 +101,29 @@ fun ActivityTypeDropdown(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = TextFieldDefaults.colors()
+                trailingIcon = { 
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) 
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color(0xFFE0E0E0),
+                    focusedBorderColor = Color(0xFF00897B),
+                    disabledBorderColor = Color(0xFFE0E0E0),
+                    disabledTextColor = Color.Black
+                )
             )
-            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
                 items.forEach { item ->
-                    DropdownMenuItem(text = { Text(item) }, onClick = {
-                        onTypeSelected(item)
-                        expanded = false
-                    })
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            onTypeSelected(item)
+                            expanded = false
+                        }
+                    )
                 }
             }
         }
