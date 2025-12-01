@@ -44,6 +44,8 @@ import com.example.healynk.R
 import com.example.healynk.viewmodel.UiState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.PaddingValues
 
 @Composable
 fun SettingsScreen(
@@ -69,82 +71,92 @@ fun SettingsScreen(
     var passwordInput by remember { mutableStateOf("") }
     var burnGoalInput by remember { mutableStateOf(uiState.dailyCaloriesGoal.toString()) }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(bottom = 32.dp)
     ) {
-        Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        CardSection(title = "Profil") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ProfileAvatar(photoUrl = uiState.photoUrl)
-                Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(
-                        text = uiState.displayName.ifBlank { "Pengguna" },
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(uiState.userEmail.ifBlank { "Belum ada email" })
+        item { Text("Settings", style = MaterialTheme.typography.headlineSmall) }
+        item {
+            CardSection(title = "Profil") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ProfileAvatar(photoUrl = uiState.photoUrl)
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(
+                            text = uiState.displayName.ifBlank { "Pengguna" },
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(uiState.userEmail.ifBlank { "Belum ada email" })
+                    }
                 }
-            }
-            SettingsActionRow(
-                title = "Ubah username",
-                subtitle = "Perbarui nama profil"
-            ) {
-                nameInput = uiState.displayName
-                showNameDialog = true
-            }
-            SettingsActionRow(
-                title = "Ubah foto profil",
-                subtitle = "Ambil dari galeri"
-            ) {
-                photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }
-            SettingsActionRow(
-                title = "Ubah email",
-                subtitle = "Ganti alamat login"
-            ) {
-                emailInput = uiState.userEmail
-                showEmailDialog = true
-            }
-            SettingsActionRow(
-                title = "Ubah password",
-                subtitle = "Setel ulang kata sandi"
-            ) {
-                passwordInput = ""
-                showPasswordDialog = true
-            }
-        }
-        CardSection(title = "Keamanan") {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text("PIN lokal", fontWeight = FontWeight.Bold)
-                    Text(if (uiState.hasPin) "PIN aktif" else "Belum ada PIN")
+                SettingsActionRow(
+                    title = "Ubah username",
+                    subtitle = "Perbarui nama profil"
+                ) {
+                    nameInput = uiState.displayName
+                    showNameDialog = true
                 }
-                TextButton(onClick = onRemovePin, enabled = uiState.hasPin) {
-                    Text("Hapus PIN")
+                SettingsActionRow(
+                    title = "Ubah foto profil",
+                    subtitle = "Ambil dari galeri"
+                ) {
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+                SettingsActionRow(
+                    title = "Ubah email",
+                    subtitle = "Ganti alamat login"
+                ) {
+                    emailInput = uiState.userEmail
+                    showEmailDialog = true
+                }
+                SettingsActionRow(
+                    title = "Ubah password",
+                    subtitle = "Setel ulang kata sandi"
+                ) {
+                    passwordInput = ""
+                    showPasswordDialog = true
                 }
             }
         }
-        CardSection(title = "Target Kalori Terbakar") {
-            OutlinedTextField(
-                value = burnGoalInput,
-                onValueChange = { text ->
-                    val sanitized = text.filter { it.isDigit() }
-                    burnGoalInput = sanitized
-                    sanitized.toIntOrNull()?.let(onUpdateBurnGoal)
-                },
-                label = { Text("Target harian (kcal)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
+        item {
+            CardSection(title = "Keamanan") {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("PIN lokal", fontWeight = FontWeight.Bold)
+                        Text(if (uiState.hasPin) "PIN aktif" else "Belum ada PIN")
+                    }
+                    TextButton(onClick = onRemovePin, enabled = uiState.hasPin) {
+                        Text("Hapus PIN")
+                    }
+                }
+            }
         }
-        uiState.error?.let {
-            Text(text = it, color = MaterialTheme.colorScheme.error)
+        item {
+            CardSection(title = "Target Kalori Terbakar") {
+                OutlinedTextField(
+                    value = burnGoalInput,
+                    onValueChange = { text ->
+                        val sanitized = text.filter { it.isDigit() }
+                        burnGoalInput = sanitized
+                        sanitized.toIntOrNull()?.let(onUpdateBurnGoal)
+                    },
+                    label = { Text("Target harian (kcal)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) {
-            Text("Logout")
+        item {
+            uiState.error?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error)
+            }
+        }
+        item {
+            Button(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) {
+                Text("Logout")
+            }
         }
     }
 

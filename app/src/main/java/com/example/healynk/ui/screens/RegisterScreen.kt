@@ -24,6 +24,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +42,10 @@ fun RegisterScreen(
 ) {
     val (email, setEmail) = remember { mutableStateOf("") }
     val (password, setPassword) = remember { mutableStateOf("") }
+    val (confirmPassword, setConfirmPassword) = remember { mutableStateOf("") }
+    val (passwordVisible, setPasswordVisible) = remember { mutableStateOf(false) }
+    val (confirmPasswordVisible, setConfirmPasswordVisible) = remember { mutableStateOf(false) }
+    val (localError, setLocalError) = remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(registrationSuccess) {
@@ -66,19 +76,59 @@ fun RegisterScreen(
             )
             OutlinedTextField(
                 value = password,
-                onValueChange = setPassword,
+                onValueChange = {
+                    setPassword(it)
+                    setLocalError(null)
+                },
                 label = { Text("Password") },
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp)
+                    .padding(top = 12.dp),
+                trailingIcon = {
+                    IconButton(onClick = { setPasswordVisible(!passwordVisible) }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
+                        )
+                    }
+                }
             )
-            errorMessage?.let {
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = {
+                    setConfirmPassword(it)
+                    setLocalError(null)
+                },
+                label = { Text("Konfirmasi Password") },
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                trailingIcon = {
+                    IconButton(onClick = { setConfirmPasswordVisible(!confirmPasswordVisible) }) {
+                        Icon(
+                            imageVector = if (confirmPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password"
+                        )
+                    }
+                }
+            )
+            val errorToShow = localError ?: errorMessage
+            errorToShow?.let {
                 Text(text = it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
             }
             Button(
-                onClick = { onRegister(email, password) },
+                onClick = {
+                    if (password != confirmPassword) {
+                        setLocalError("Password tidak cocok")
+                    } else {
+                        setLocalError(null)
+                        onRegister(email, password)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)

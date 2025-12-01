@@ -1,6 +1,8 @@
 package com.example.healynk.viewmodel
 
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -168,6 +170,7 @@ class UiViewModel(
         authService.currentUserId?.let { firebaseService.deleteFood(it, id) }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun observeData() {
         dataJob?.cancel()
         dataJob = viewModelScope.launch {
