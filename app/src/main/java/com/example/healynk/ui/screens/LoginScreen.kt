@@ -19,6 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -32,6 +38,7 @@ fun LoginScreen(
 ) {
     val (email, setEmail) = remember { mutableStateOf("") }
     val (password, setPassword) = remember { mutableStateOf("") }
+    val (passwordVisible, setPasswordVisible) = remember { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(isAuthenticated, hasPin) {
         if (isAuthenticated) {
@@ -59,8 +66,16 @@ fun LoginScreen(
             onValueChange = setPassword,
             label = { Text("Password") },
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { setPasswordVisible(!passwordVisible) }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                        contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
+                    )
+                }
+            }
         )
         errorMessage?.let {
             Spacer(modifier = Modifier.height(8.dp))
