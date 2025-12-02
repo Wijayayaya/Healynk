@@ -54,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.healynk.models.FoodEntry
+import com.example.healynk.models.Measurement
 import com.example.healynk.viewmodel.UiState
 import java.time.Instant
 import java.time.LocalDate
@@ -401,10 +402,12 @@ private fun MealFrequencyItem(
 
 @Composable
 private fun BmiScoreCard(uiState: UiState) {
-    val latestMeasurement = uiState.latestMeasurement
-    val height = latestMeasurement?.heightCm
-    val weight = latestMeasurement?.weightKg
-    val bmiValue = uiState.latestBmi ?: calculateBmiValue(height, weight)
+    val latestBodyStat = remember(uiState.measurements) {
+        uiState.measurements.latestMatching { it.heightCm != null && it.weightKg != null }
+    }
+    val height = latestBodyStat?.heightCm
+    val weight = latestBodyStat?.weightKg
+    val bmiValue = latestBodyStat?.let { calculateBmiValue(it.heightCm, it.weightKg) } ?: uiState.latestBmi
     val bmiText = bmiValue?.let { String.format("%.1f", it) } ?: "--"
     val status = bmiValue?.let { bmiClassification(it) } ?: "Tambahkan tinggi & berat"
 
@@ -480,8 +483,11 @@ private fun BmiScoreCard(uiState: UiState) {
 
 @Composable
 private fun BloodPressureCard(uiState: UiState) {
-    val latestSystolic = uiState.latestMeasurement?.systolic
-    val latestDiastolic = uiState.latestMeasurement?.diastolic
+    val latestBloodPressure = remember(uiState.measurements) {
+        uiState.measurements.latestMatching { it.systolic != null && it.diastolic != null }
+    }
+    val latestSystolic = latestBloodPressure?.systolic
+    val latestDiastolic = latestBloodPressure?.diastolic
     val (statusText, statusColor) = remember(latestSystolic, latestDiastolic) {
         bloodPressureStatus(latestSystolic, latestDiastolic)
     }
@@ -544,7 +550,10 @@ private fun BloodPressureCard(uiState: UiState) {
 
 @Composable
 private fun GlucoseCard(uiState: UiState) {
-    val latestGlucose = uiState.latestMeasurement?.glucoseMgDl
+    val latestGlucoseMeasurement = remember(uiState.measurements) {
+        uiState.measurements.latestMatching { it.glucoseMgDl != null }
+    }
+    val latestGlucose = latestGlucoseMeasurement?.glucoseMgDl
     val (statusText, statusColor) = remember(latestGlucose) { glucoseStatus(latestGlucose) }
     val trend = remember(uiState.glucoseTrend) { uiState.glucoseTrend.takeLast(7) }
 
@@ -975,9 +984,9 @@ private fun bmiClassification(value: Double): String = when {
 private fun bloodPressureStatus(systolic: Int?, diastolic: Int?): Pair<String, Color> {
     if (systolic == null || diastolic == null) return "Belum ada data" to StatusNeutral
     return when {
-        systolic < 90 || diastolic < 60 -> "Tekanan rendah" to StatusLow
-        systolic < 120 && diastolic < 80 -> "Normal" to StatusNormal
-        systolic < 140 && diastolic < 90 -> "Waspada" to StatusElevated
+        systolic <= 90 || diastolic <= 60 -> "Tekanan rendah" to StatusLow
+        systolic <= 120 && diastolic <= 80 -> "Normal" to StatusNormal
+        systolic <= 140 && diastolic <= 90 -> "Waspada" to StatusElevated
         else -> "Tinggi" to StatusHigh
     }
 }
@@ -991,6 +1000,9 @@ private fun glucoseStatus(glucose: Int?): Pair<String, Color> {
         else -> "Tinggi" to StatusHigh
     }
 }
+
+private fun List<Measurement>.latestMatching(predicate: (Measurement) -> Boolean): Measurement? =
+    filter(predicate).maxByOrNull { it.timestamp }
 
 private fun formatBloodPressure(systolic: Int?, diastolic: Int?): String =
     if (systolic != null && diastolic != null) "$systolic/$diastolic mmHg" else "--"
