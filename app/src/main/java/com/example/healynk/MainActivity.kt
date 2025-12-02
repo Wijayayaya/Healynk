@@ -170,7 +170,8 @@ fun HealynkNavHost(navController: NavHostController, viewModel: UiViewModel) {
                 onRestoreActivity = viewModel::addActivity,
                 onRestoreFood = viewModel::addFood,
                 onUploadPhoto = viewModel::uploadProfilePhoto,
-                onUpdateBurnGoal = viewModel::updateBurnGoal
+                onUpdateBurnGoal = viewModel::updateBurnGoal,
+                onUpdateTargetGoal = viewModel::updateTargetGoal
             )
         }
         addFormDestinations(navController, viewModel)

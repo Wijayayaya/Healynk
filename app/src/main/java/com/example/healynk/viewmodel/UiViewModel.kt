@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.healynk.models.ActivityEntry
 import com.example.healynk.models.FoodEntry
+import com.example.healynk.models.TargetIds
 import com.example.healynk.models.Measurement
 import com.example.healynk.services.AuthService
 import com.example.healynk.services.FirebaseService
@@ -196,7 +197,8 @@ class UiViewModel(
                             summaryDistanceKm = 0.0,
                             summaryDuration = 0,
                             userEmail = "",
-                            dailyCaloriesGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL)
+                            dailyCaloriesGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL),
+                            targetGoals = emptyMap()
                         )
                     }
                     return@collectLatest
@@ -209,6 +211,11 @@ class UiViewModel(
                 ) { measurements, activities, foods ->
                     val todayFoods = foods.filter { it.isToday() }
                     val todayActivities = activities.filter { it.isToday() }
+                    val dailyGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL)
+                    val defaultTargets = mapOf(
+                        TargetIds.CalorieIn to dailyGoal.toFloat(),
+                        TargetIds.CalorieOut to (todayActivities.sumOf { it.caloriesBurned ?: 0 }.takeIf { it > 0 }?.toFloat() ?: 400f)
+                    )
                     val groupedMeasurements = measurements.groupByDay()
                     val groupedFoods = foods.groupFoodDayCalories()
                     val groupedActivities = activities.groupActivityDayCalories()
@@ -225,7 +232,7 @@ class UiViewModel(
                         foods = foods,
                         dailyCalories = todayFoods.sumOf { it.calories },
                         dailyActivityCalories = todayActivities.sumOf { it.caloriesBurned ?: 0 },
-                        dailyCaloriesGoal = userPreferences.getBurnGoal(Constants.DAILY_CALORIE_GOAL),
+                        dailyCaloriesGoal = dailyGoal,
                         latestMeasurement = measurements.maxByOrNull { it.timestamp },
                         latestBmi = bmi,
                         weightTrend = groupedMeasurements.weightTrend(),
@@ -238,7 +245,8 @@ class UiViewModel(
                         error = null,
                         userEmail = authService.currentUserEmail.orEmpty(),
                         displayName = authService.currentUserDisplayName.orEmpty(),
-                        photoUrl = authService.currentUserPhotoUrl
+                        photoUrl = authService.currentUserPhotoUrl,
+                        targetGoals = userPreferences.getTargetGoals(userId, defaultTargets)
                     )
                 }.collectLatest { newState ->
                     _uiState.value = newState
@@ -358,6 +366,16 @@ class UiViewModel(
         userPreferences.setBurnGoal(goal)
         _uiState.update { it.copy(dailyCaloriesGoal = goal) }
     }
+
+    fun updateTargetGoal(targetId: String, value: Float) {
+        val userId = authService.currentUserId ?: return
+        userPreferences.updateTargetGoal(userId, targetId, value)
+        _uiState.update { state ->
+            val updatedGoals = state.targetGoals.toMutableMap()
+            updatedGoals[targetId] = value
+            state.copy(targetGoals = updatedGoals)
+        }
+    }
 }
 
 data class UiState(
@@ -383,5 +401,6 @@ data class UiState(
     val userEmail: String = "",
     val displayName: String = "",
     val photoUrl: String? = null,
-    val registrationSuccess: Boolean = false
+    val registrationSuccess: Boolean = false,
+    val targetGoals: Map<String, Float> = emptyMap()
 )

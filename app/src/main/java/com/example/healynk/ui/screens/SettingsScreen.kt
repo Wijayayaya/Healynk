@@ -86,7 +86,7 @@ fun SettingsScreen(
                 Brush.verticalGradient(
                     colors = listOf(
                         Color(0xFF00897B),
-                        Color(0xFF26A69A)
+                        Color(0xFF00897B)
                     )
                 )
             )
@@ -190,27 +190,6 @@ fun SettingsScreen(
                             )
                         }
                     }
-                }
-            }
-            item {
-                CardSection(title = "Target Kalori Terbakar") {
-                    OutlinedTextField(
-                        value = burnGoalInput,
-                        onValueChange = { text ->
-                            val sanitized = text.filter { it.isDigit() }
-                            val limited = sanitized.take(MAX_BURN_GOAL_DIGITS)
-                            burnGoalInput = limited
-                            limited.toIntOrNull()?.coerceAtMost(MAX_BURN_GOAL_VALUE)?.let(onUpdateBurnGoal)
-                        },
-                        label = { Text("Target harian (kkal)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = Color(0xFFE0E0E0),
-                            focusedBorderColor = Color(0xFF00897B)
-                        )
-                    )
                 }
             }
             item {

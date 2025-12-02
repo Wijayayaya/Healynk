@@ -58,7 +58,7 @@ fun PinAuthScreen(
                 Brush.verticalGradient(
                     colors = listOf(
                         Color(0xFF00897B),
-                        Color(0xFF26A69A)
+                        Color(0xFF00897B)
                     )
                 )
             )
