@@ -8,18 +8,18 @@ object Constants {
     const val FOODS_COLLECTION = "foods"
     const val DAILY_CALORIE_GOAL = 2000
     const val PIN_KEY_PREFIX = "KEY_PIN_HASH_"
-    val ACTIVITY_TYPES = listOf("Walking", "Running", "Cycling", "Swimming", "Mendaki")
-    val DISTANCE_BASED_TYPES = setOf("Walking", "Running", "Cycling", "Swimming", "Mendaki")
-    const val WALKING_CALORIES_PER_KM = 55 // kcal per km default
+    val ACTIVITY_TYPES = listOf("Jalan kaki", "Lari", "Bersepeda", "Berenang", "Mendaki")
+    val DISTANCE_BASED_TYPES = setOf("Jalan kaki", "Lari", "Bersepeda", "Berenang", "Mendaki")
+    const val WALKING_CALORIES_PER_KM = 55 // kkal per km standar
     const val RUNNING_CALORIES_PER_KM = 70
     const val CYCLING_CALORIES_PER_KM = 45
     const val SWIMMING_CALORIES_PER_KM = 60
     const val HIKING_CALORIES_PER_KM = 50
 
     fun caloriesPerKmFor(type: String): Int = when (type) {
-        "Running" -> RUNNING_CALORIES_PER_KM
-        "Cycling" -> CYCLING_CALORIES_PER_KM
-        "Swimming" -> SWIMMING_CALORIES_PER_KM
+        "Lari" -> RUNNING_CALORIES_PER_KM
+        "Bersepeda" -> CYCLING_CALORIES_PER_KM
+        "Berenang" -> SWIMMING_CALORIES_PER_KM
         "Mendaki" -> HIKING_CALORIES_PER_KM
         else -> WALKING_CALORIES_PER_KM
     }

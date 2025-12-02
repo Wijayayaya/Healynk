@@ -71,7 +71,7 @@ fun CalorieRing(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "$consumed / $target kcal",
+                    text = "$consumed / $target kkal",
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                     textAlign = TextAlign.Center
                 )

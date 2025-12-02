@@ -68,7 +68,7 @@ fun RegisterScreen(
 
     LaunchedEffect(registrationSuccess) {
         if (registrationSuccess) {
-            snackbarHostState.showSnackbar("Pendaftaran berhasil, silakan login")
+            snackbarHostState.showSnackbar("Pendaftaran berhasil, silakan masuk")
             onRegistrationConsumed()
             onNavigateLogin()
         }
@@ -111,7 +111,7 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     Image(
                         painter = painterResource(id = R.drawable.logo_healynk),
-                        contentDescription = "Healynk Logo",
+                        contentDescription = "Logo Healynk",
                         modifier = Modifier.size(120.dp)
                     )
 
@@ -136,7 +136,7 @@ fun RegisterScreen(
                             value = email,
                             onValueChange = setEmail,
                             label = { Text("Email") },
-                            placeholder = { Text("Enter your email") },
+                            placeholder = { Text("Masukkan email kamu") },
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Email,
@@ -158,8 +158,8 @@ fun RegisterScreen(
                         OutlinedTextField(
                             value = password,
                             onValueChange = setPassword,
-                            label = { Text("Password") },
-                            placeholder = { Text("Enter your password") },
+                            label = { Text("Kata Sandi") },
+                            placeholder = { Text("Masukkan kata sandi kamu") },
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Lock,
@@ -171,7 +171,7 @@ fun RegisterScreen(
                                 IconButton(onClick = { setPasswordVisible(!passwordVisible) }) {
                                     Icon(
                                         if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                        contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi"
                                     )
                                 }
                             },
@@ -190,8 +190,8 @@ fun RegisterScreen(
                         OutlinedTextField(
                             value = confirmPassword,
                             onValueChange = setConfirmPassword,
-                            label = { Text("Confirm Password") },
-                            placeholder = { Text("Re-enter your password") },
+                            label = { Text("Konfirmasi Kata Sandi") },
+                            placeholder = { Text("Masukkan ulang kata sandi kamu") },
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Lock,
@@ -203,7 +203,7 @@ fun RegisterScreen(
                                 IconButton(onClick = { setConfirmPasswordVisible(!confirmPasswordVisible) }) {
                                     Icon(
                                         if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                        contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password"
+                                        contentDescription = if (confirmPasswordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi"
                                     )
                                 }
                             },
@@ -239,7 +239,7 @@ fun RegisterScreen(
                             )
                         ) {
                             Text(
-                                "Sign Up",
+                                "Daftar",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

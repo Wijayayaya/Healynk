@@ -279,16 +279,18 @@ class UiViewModel(
         }.takeLast(7)
 
     private fun List<FoodEntry>.groupFoodDayCalories(): List<Pair<String, Int>> =
-        groupBy { Instant.ofEpochMilli(it.timestamp).atZone(zoneId).toLocalDate().format(dayFormatter) }
-            .map { (day, entries) -> day to entries.sumOf { entry -> entry.calories } }
-            .sortedBy { LocalDate.parse(it.first, dayFormatter) }
+        groupBy { Instant.ofEpochMilli(it.timestamp).atZone(zoneId).toLocalDate() }
+            .map { (date, entries) -> date to entries.sumOf { entry -> entry.calories } }
+            .sortedBy { it.first }
             .takeLast(7)
+            .map { (date, calories) -> date.format(dayFormatter) to calories }
 
     private fun List<ActivityEntry>.groupActivityDayCalories(): List<Pair<String, Int>> =
-        groupBy { Instant.ofEpochMilli(it.timestamp).atZone(zoneId).toLocalDate().format(dayFormatter) }
-            .map { (day, entries) -> day to entries.sumOf { entry -> entry.caloriesBurned ?: 0 } }
-            .sortedBy { LocalDate.parse(it.first, dayFormatter) }
+        groupBy { Instant.ofEpochMilli(it.timestamp).atZone(zoneId).toLocalDate() }
+            .map { (date, entries) -> date to entries.sumOf { entry -> entry.caloriesBurned ?: 0 } }
+            .sortedBy { it.first }
             .takeLast(7)
+            .map { (date, calories) -> date.format(dayFormatter) to calories }
 
     private fun calculateBmi(weightKg: Double?, heightCm: Double?): Double? {
         if (weightKg == null || heightCm == null || heightCm == 0.0) return null

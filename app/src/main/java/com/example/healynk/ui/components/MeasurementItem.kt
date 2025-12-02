@@ -38,7 +38,7 @@ fun MeasurementItem(
                 Text(text = Formatters.formatDateTime(measurement.timestamp), style = MaterialTheme.typography.labelLarge)
                 if (onDelete != null) {
                     IconButton(onClick = onDelete) {
-                        Icon(imageVector = deleteIcon, contentDescription = "Delete measurement")
+                        Icon(imageVector = deleteIcon, contentDescription = "Hapus pengukuran")
                     }
                 }
             }

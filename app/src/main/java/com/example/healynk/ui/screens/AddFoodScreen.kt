@@ -136,7 +136,7 @@ fun AddFoodScreen(
                         NumberTextField(
                             value = calories,
                             onValueChange = { calories = it },
-                            label = "Kalori (kcal)"
+                            label = "Kalori (kkal)"
                         )
 
                         Row(
@@ -146,7 +146,7 @@ fun AddFoodScreen(
                             NumberTextField(
                                 value = carbs,
                                 onValueChange = { carbs = it },
-                                label = "Karbo (g)",
+                                label = "Karbohidrat (g)",
                                 modifier = Modifier.weight(1f)
                             )
                             NumberTextField(
