@@ -43,7 +43,7 @@ fun ActivityItem(
                 )
                 if (onDelete != null && deleteIcon != null) {
                     IconButton(onClick = onDelete) {
-                        Icon(imageVector = deleteIcon, contentDescription = "Delete activity")
+                        Icon(imageVector = deleteIcon, contentDescription = "Hapus aktivitas")
                     }
                 }
             }
@@ -54,7 +54,7 @@ fun ActivityItem(
             activity.pace?.let {
                 Text("Pace: ${Formatters.formatPace(it)} mnt/km")
             }
-            activity.caloriesBurned?.let { Text("Kalori: $it kcal") }
+            activity.caloriesBurned?.let { Text("Kalori: $it kkal") }
             activity.notes?.takeIf { it.isNotBlank() }?.let { Text(it) }
         }
     }

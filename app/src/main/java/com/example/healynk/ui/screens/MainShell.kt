@@ -28,7 +28,6 @@ import com.example.healynk.utils.Constants
 import com.example.healynk.viewmodel.UiState
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.healynk.models.Measurement
 import com.example.healynk.models.ActivityEntry
 import com.example.healynk.models.FoodEntry
@@ -65,17 +64,18 @@ fun MainShell(
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination?.route
                 val items = listOf(
-                    NavItem(Constants.ROUTE_HOME, "Home", Icons.Default.Home),
-                    NavItem(Constants.ROUTE_HISTORY, "History", Icons.Default.History),
-                    NavItem(Constants.ROUTE_ANALYTICS, "Analytics", Icons.Default.Analytics),
-                    NavItem(Constants.ROUTE_SETTINGS, "Settings", Icons.Default.Settings)
+                    NavItem(Constants.ROUTE_HOME, "Beranda", Icons.Default.Home),
+                    NavItem(Constants.ROUTE_HISTORY, "Riwayat", Icons.Default.History),
+                    NavItem(Constants.ROUTE_ANALYTICS, "Analitik", Icons.Default.Analytics),
+                    NavItem(Constants.ROUTE_SETTINGS, "Pengaturan", Icons.Default.Settings)
                 )
                 items.forEach { item ->
                     NavigationBarItem(
                         selected = currentDestination == item.route,
                         onClick = {
                             navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
+                                popUpTo(Constants.ROUTE_HOME) {
+                                    inclusive = false
                                     saveState = true
                                 }
                                 launchSingleTop = true

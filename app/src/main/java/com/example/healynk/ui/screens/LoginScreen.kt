@@ -101,7 +101,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Image(
                     painter = painterResource(id = R.drawable.logo_healynk),
-                    contentDescription = "Healynk Logo",
+                    contentDescription = "Logo Healynk",
                     modifier = Modifier.size(120.dp)
                 )
 
@@ -126,7 +126,7 @@ fun LoginScreen(
                         value = email,
                         onValueChange = setEmail,
                         label = { Text("Email") },
-                        placeholder = { Text("Enter your email") },
+                        placeholder = { Text("Masukkan email kamu") },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Email,
@@ -148,8 +148,8 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = setPassword,
-                        label = { Text("Password") },
-                        placeholder = { Text("Enter your password") },
+                        label = { Text("Kata Sandi") },
+                        placeholder = { Text("Masukkan kata sandi kamu") },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Lock,
@@ -161,7 +161,7 @@ fun LoginScreen(
                             IconButton(onClick = { setPasswordVisible(!passwordVisible) }) {
                                 Icon(
                                     if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                    contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi"
                                 )
                             }
                         },

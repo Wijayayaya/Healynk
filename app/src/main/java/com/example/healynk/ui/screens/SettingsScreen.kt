@@ -52,6 +52,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.PaddingValues
 
+private const val MAX_BURN_GOAL_VALUE = 9999
+private const val MAX_BURN_GOAL_DIGITS = 4
+
 @Composable
 fun SettingsScreen(
     uiState: UiState,
@@ -128,7 +131,7 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 SettingsActionRow(
-                    title = "Ubah username",
+                    title = "Ubah nama pengguna",
                     subtitle = "Perbarui nama profil"
                 ) {
                     nameInput = uiState.displayName
@@ -148,7 +151,7 @@ fun SettingsScreen(
                     showEmailDialog = true
                 }
                 SettingsActionRow(
-                    title = "Ubah password",
+                    title = "Ubah kata sandi",
                     subtitle = "Setel ulang kata sandi"
                 ) {
                     passwordInput = ""
@@ -195,10 +198,11 @@ fun SettingsScreen(
                         value = burnGoalInput,
                         onValueChange = { text ->
                             val sanitized = text.filter { it.isDigit() }
-                            burnGoalInput = sanitized
-                            sanitized.toIntOrNull()?.let(onUpdateBurnGoal)
+                            val limited = sanitized.take(MAX_BURN_GOAL_DIGITS)
+                            burnGoalInput = limited
+                            limited.toIntOrNull()?.coerceAtMost(MAX_BURN_GOAL_VALUE)?.let(onUpdateBurnGoal)
                         },
-                        label = { Text("Target harian (kcal)") },
+                        label = { Text("Target harian (kkal)") },
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
@@ -247,7 +251,7 @@ fun SettingsScreen(
 
     if (showNameDialog) {
         EditValueDialog(
-            title = "Ubah username",
+            title = "Ubah nama pengguna",
             value = nameInput,
             onValueChange = { nameInput = it },
             confirmLabel = "Simpan"
@@ -273,7 +277,7 @@ fun SettingsScreen(
     }
     if (showPasswordDialog) {
         EditValueDialog(
-            title = "Ubah password",
+            title = "Ubah kata sandi",
             value = passwordInput,
             onValueChange = { passwordInput = it },
             confirmLabel = "Simpan",
@@ -315,7 +319,7 @@ private fun ProfileAvatar(photoUrl: String?) {
     if (photoUrl.isNullOrBlank()) {
         Image(
             painter = androidx.compose.ui.res.painterResource(id = R.drawable.logo_healynk),
-            contentDescription = "Avatar",
+            contentDescription = "Foto profil",
             modifier = Modifier
                 .size(64.dp)
                 .clip(CircleShape)
@@ -323,7 +327,7 @@ private fun ProfileAvatar(photoUrl: String?) {
     } else {
         AsyncImage(
             model = photoUrl,
-            contentDescription = "Avatar",
+            contentDescription = "Foto profil",
             modifier = Modifier
                 .size(64.dp)
                 .clip(CircleShape)
@@ -357,7 +361,7 @@ private fun SettingsActionRow(
         }
         TextButton(onClick = onClick) {
             Text(
-                text = "Edit",
+                text = "Ubah",
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00897B)
             )

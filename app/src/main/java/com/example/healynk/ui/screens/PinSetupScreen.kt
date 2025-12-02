@@ -86,7 +86,7 @@ fun PinSetupScreen(onSetPin: (String) -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
             Image(
                 painter = painterResource(id = R.drawable.logo_healynk),
-                contentDescription = "Healynk Logo",
+                contentDescription = "Logo Healynk",
                 modifier = Modifier.size(100.dp)
             )
 

@@ -35,11 +35,11 @@ fun FoodItem(
                 Text(text = food.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 if (onDelete != null && deleteIcon != null) {
                     IconButton(onClick = onDelete) {
-                        Icon(imageVector = deleteIcon, contentDescription = "Delete food entry")
+                        Icon(imageVector = deleteIcon, contentDescription = "Hapus catatan makanan")
                     }
                 }
             }
-            Text(text = "${food.calories} kcal · ${Formatters.formatDateTime(food.timestamp)}")
+            Text(text = "${food.calories} kkal · ${Formatters.formatDateTime(food.timestamp)}")
             food.carbs?.let { Text("Karbohidrat: $it g") }
             food.protein?.let { Text("Protein: $it g") }
             food.fat?.let { Text("Lemak: $it g") }
