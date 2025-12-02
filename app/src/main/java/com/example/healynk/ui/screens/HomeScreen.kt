@@ -1,7 +1,9 @@
 package com.example.healynk.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,46 +16,66 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bloodtype
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.healynk.R
 import com.example.healynk.models.ActivityEntry
 import com.example.healynk.models.FoodEntry
+import com.example.healynk.models.TargetIds
 import com.example.healynk.utils.Formatters
 import com.example.healynk.viewmodel.UiState
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -61,7 +83,8 @@ fun HomeScreen(
     onAddMeasurement: () -> Unit,
     onAddBodyStats: () -> Unit,
     onAddActivity: () -> Unit,
-    onAddFood: () -> Unit
+    onAddFood: () -> Unit,
+    onUpdateTargetGoal: (String, Float) -> Unit
 ) {
     val scrollState = rememberScrollState()
     val greeting = remember { greetingMessage() }
@@ -73,6 +96,72 @@ fun HomeScreen(
     val burned = uiState.dailyActivityCalories
     val goal = uiState.dailyCaloriesGoal
     var fabMenuExpanded by remember { mutableStateOf(false) }
+    val targetOptions = remember { TargetTemplates }
+    val targetEntries = remember(uiState.targetGoals, targetOptions) {
+        targetOptions.map { template ->
+            TargetEntry(template, uiState.targetGoals[template.id])
+        }
+    }
+    var showTargetDialog by remember { mutableStateOf(false) }
+    var selectedTemplateId by remember { mutableStateOf(targetOptions.firstOrNull()?.id) }
+    var targetValueInput by remember { mutableStateOf("") }
+    fun openTargetDialog(entry: TargetEntry?) {
+        if (targetOptions.isEmpty()) return
+        if (entry == null) {
+            val defaultTemplate = targetOptions.firstOrNull() ?: return
+            selectedTemplateId = defaultTemplate.id
+            val existing = targetEntries.firstOrNull { it.template.id == defaultTemplate.id }
+            targetValueInput = existing?.value?.let { formatTargetInput(it, defaultTemplate.allowDecimal) } ?: ""
+        } else {
+            selectedTemplateId = entry.template.id
+            targetValueInput = entry.value?.let { formatTargetInput(it, entry.template.allowDecimal) } ?: ""
+        }
+        showTargetDialog = true
+    }
+    val fabActions = listOf(
+        FabMenuAction(
+            title = "Kelola target",
+            subtitle = "Atur target harianmu",
+            icon = Icons.Filled.Flag,
+            iconTint = TargetTimeColor,
+            iconBackground = TargetTimeColor.copy(alpha = 0.15f)
+        ) {
+            fabMenuExpanded = false
+            openTargetDialog(null)
+        },
+        FabMenuAction(
+            title = "Tambah makanan",
+            subtitle = "Catat konsumsi hari ini",
+            icon = Icons.Filled.Restaurant
+        ) {
+            fabMenuExpanded = false
+            onAddFood()
+        },
+        FabMenuAction(
+            title = "Tambah aktivitas",
+            subtitle = "Rekam olahraga terkini",
+            icon = Icons.Filled.DirectionsRun
+        ) {
+            fabMenuExpanded = false
+            onAddActivity()
+        },
+        FabMenuAction(
+            title = "Input tekanan darah",
+            subtitle = "Pantau tekanan darah dan gula",
+            icon = Icons.Filled.Bloodtype
+        ) {
+            fabMenuExpanded = false
+            onAddMeasurement()
+        },
+        FabMenuAction(
+            title = "Input tinggi & berat",
+            subtitle = "Perbarui data tubuh",
+            icon = Icons.Filled.MonitorWeight
+        ) {
+            fabMenuExpanded = false
+            onAddBodyStats()
+        }
+    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -106,6 +195,12 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
             MacrosCard(macroRows)
             Spacer(modifier = Modifier.height(16.dp))
+            TargetOverviewCard(
+                targets = targetEntries,
+                onAddTarget = { openTargetDialog(null) },
+                onEditTarget = { entry -> openTargetDialog(entry) }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             RecentMealsCard(
                 foods = todaysFoods,
                 onAddFood = onAddFood
@@ -130,24 +225,43 @@ fun HomeScreen(
             }
             DropdownMenu(
                 expanded = fabMenuExpanded,
-                onDismissRequest = { fabMenuExpanded = false }
+                onDismissRequest = { fabMenuExpanded = false },
+                modifier = Modifier
+                    .shadow(12.dp, RoundedCornerShape(20.dp))
+                    .background(Color.White, RoundedCornerShape(20.dp))
             ) {
-                FabMenuItem("Tambah makanan") {
-                    fabMenuExpanded = false
-                    onAddFood()
+                fabActions.forEachIndexed { index, action ->
+                    FabMenuItem(action)
+                    if (index != fabActions.lastIndex) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = Color(0xFFE0E0E0)
+                        )
+                    }
                 }
-                FabMenuItem("Tambah aktivitas") {
-                    fabMenuExpanded = false
-                    onAddActivity()
-                }
-                FabMenuItem("Input tekanan darah") {
-                    fabMenuExpanded = false
-                    onAddMeasurement()
-                }
-                FabMenuItem("Input tinggi & berat") {
-                    fabMenuExpanded = false
-                    onAddBodyStats()
-                }
+            }
+            if (showTargetDialog && targetOptions.isNotEmpty()) {
+                val selectedTemplate = targetOptions.firstOrNull { it.id == selectedTemplateId }
+                TargetDialog(
+                    templates = targetOptions,
+                    selectedTemplateId = selectedTemplateId,
+                    valueInput = targetValueInput,
+                    onValueChange = { input ->
+                        val allowDecimal = selectedTemplate?.allowDecimal == true
+                        targetValueInput = sanitizeNumericInput(input, allowDecimal)
+                    },
+                    onTemplateSelected = { template ->
+                        selectedTemplateId = template.id
+                        val existing = targetEntries.firstOrNull { it.template.id == template.id }
+                        targetValueInput = existing?.value?.let { formatTargetInput(it, template.allowDecimal) } ?: ""
+                    },
+                    onDismiss = { showTargetDialog = false },
+                    onSave = { template, value ->
+                        val normalized = if (template.allowDecimal) value else value.roundToInt().toFloat()
+                        onUpdateTargetGoal(template.id, normalized)
+                        showTargetDialog = false
+                    }
+                )
             }
         }
     }
@@ -179,10 +293,7 @@ private fun GreetingHeader(greeting: String, name: String, photoUrl: String?) {
                     overflow = TextOverflow.Ellipsis
                 )
             }
-        }
-        IconButton(onClick = { /* reserved for notifications */ }) {
-            Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifikasi", tint = Color.White)
-        }
+        }       
     }
 }
 
@@ -220,8 +331,6 @@ private fun DailyGoalCard(remaining: Int, goal: Int, consumed: Int, burned: Int)
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        GoalStat(value = goal, label = "Target", modifier = Modifier.weight(1f))
-                        GoalStatDivider()
                         GoalStat(value = consumed, label = "Dikonsumsi", modifier = Modifier.weight(1f))
                         GoalStatDivider()
                         GoalStat(value = burned, label = "Dibakar", modifier = Modifier.weight(1f))
@@ -337,6 +446,234 @@ private fun MacroRow(row: MacroRowData) {
 }
 
 @Composable
+private fun TargetOverviewCard(
+    targets: List<TargetEntry>,
+    onAddTarget: () -> Unit,
+    onEditTarget: (TargetEntry) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(TargetTimeColor.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Flag,
+                            contentDescription = null,
+                            tint = TargetTimeColor
+                        )
+                    }
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(text = "Menu Target", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Sesuaikan target makan dan aktivitas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Button(onClick = onAddTarget) {
+                    Text("Kelola")
+                }
+            }
+            if (targets.isEmpty()) {
+                Text(
+                    text = "Tidak ada target tersedia.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    targets.forEach { target ->
+                        TargetTile(entry = target) { onEditTarget(target) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TargetTile(entry: TargetEntry, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        color = entry.template.accent.copy(alpha = 0.08f),
+        border = BorderStroke(1.dp, entry.template.accent.copy(alpha = 0.25f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = entry.template.icon,
+                    contentDescription = null,
+                    tint = entry.template.accent
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(entry.template.title, fontWeight = FontWeight.SemiBold)
+                Text(
+                    entry.template.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+                val hasValue = entry.value != null
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                        text = entry.displayValue(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                        color = if (hasValue) entry.template.accent else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                        text = if (hasValue) "Ketuk untuk ubah" else "Ketuk untuk atur",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TargetDialog(
+    templates: List<TargetTemplate>,
+    selectedTemplateId: String?,
+    valueInput: String,
+    onValueChange: (String) -> Unit,
+    onTemplateSelected: (TargetTemplate) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: (TargetTemplate, Float) -> Unit
+) {
+    val selectedTemplate = templates.firstOrNull { it.id == selectedTemplateId } ?: templates.firstOrNull()
+    val numericValue = valueInput.toFloatOrNull()
+    val isValid = selectedTemplate != null && numericValue != null && numericValue > 0f
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Atur Target Harian") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text("Pilih jenis target", fontWeight = FontWeight.SemiBold)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    templates.forEach { template ->
+                        TargetOptionRow(
+                            template = template,
+                            selected = template.id == selectedTemplate?.id,
+                            onClick = { onTemplateSelected(template) }
+                        )
+                    }
+                }
+                selectedTemplate?.let { template ->
+                    OutlinedTextField(
+                        value = valueInput,
+                        onValueChange = onValueChange,
+                        label = { Text("Nilai (${template.unit})") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = if (template.allowDecimal) KeyboardType.Decimal else KeyboardType.Number
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = template.accent,
+                            focusedLabelColor = template.accent
+                        )
+                    )
+                    Text(
+                        text = template.subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { selectedTemplate?.let { onSave(it, numericValue!!) } }, enabled = isValid) {
+                Text("Simpan")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Batal") }
+        }
+    )
+}
+
+@Composable
+private fun TargetOptionRow(template: TargetTemplate, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (selected) template.accent else Color(0xFFE0E0E0)
+        ),
+        color = if (selected) template.accent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(template.accent.copy(alpha = 0.16f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = template.icon, contentDescription = null, tint = template.accent)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(template.title, fontWeight = FontWeight.SemiBold)
+                Text(
+                    template.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = template.accent
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun RecentMealsCard(
     foods: List<FoodEntry>,
     onAddFood: () -> Unit
@@ -347,16 +684,44 @@ private fun RecentMealsCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         shape = RoundedCornerShape(24.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Makanan Terbaru", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(FabColor.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Restaurant,
+                            contentDescription = null,
+                            tint = FabColor
+                        )
+                    }
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(text = "Makanan Terbaru", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Pantau asupan terakhir kamu",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 TextButton(onClick = onAddFood) { Text("Tambah") }
             }
             if (foods.isEmpty()) {
                 Text("Belum ada makanan yang dicatat hari ini.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                foods.forEach { food ->
-                    MealRow(food)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    foods.forEach { food ->
+                        MealRow(food)
+                    }
                 }
             }
         }
@@ -375,15 +740,43 @@ private fun RecentActivitiesCard(
         shape = RoundedCornerShape(24.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Aktivitas Terbaru", style = MaterialTheme.typography.titleMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(ActivityAccentColor.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.DirectionsRun,
+                            contentDescription = null,
+                            tint = ActivityAccentColor
+                        )
+                    }
+                    Column(modifier = Modifier.padding(start = 12.dp)) {
+                        Text(text = "Aktivitas Terbaru", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "Lihat pergerakan teranyar",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 TextButton(onClick = onAddActivity) { Text("Tambah") }
             }
             if (activities.isEmpty()) {
                 Text("Belum ada aktivitas hari ini.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                activities.forEach { activity ->
-                    ActivityRow(activity)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    activities.forEach { activity ->
+                        ActivityRow(activity)
+                    }
                 }
             }
         }
@@ -392,29 +785,54 @@ private fun RecentActivitiesCard(
 
 @Composable
 private fun ActivityRow(activity: ActivityEntry) {
-    Row(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        shape = RoundedCornerShape(20.dp),
+        color = ActivityAccentColor.copy(alpha = 0.08f)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(activity.type.ifBlank { "Aktivitas" }, fontWeight = FontWeight.SemiBold)
-            val subtitle = buildString {
-                append(Formatters.formatTime(activity.timestamp))
-                activity.durationMinutes?.let {
-                    append(" • ")
-                    append("${it} menit")
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(ActivityAccentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = (activity.type.ifBlank { "Aktivitas" }).take(1).uppercase(),
+                    fontWeight = FontWeight.Bold,
+                    color = ActivityAccentColor
+                )
             }
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        val metrics = buildList {
-            activity.caloriesBurned?.let { add("${it} kkal") }
-            activity.distanceKm?.let { add(String.format(Locale.getDefault(), "%.1f km", it)) }
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            metrics.forEach { metric ->
-                Text(metric, style = MaterialTheme.typography.bodySmall)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(activity.type.ifBlank { "Aktivitas" }, fontWeight = FontWeight.SemiBold)
+                val subtitle = buildString {
+                    append(Formatters.formatTime(activity.timestamp))
+                    activity.durationMinutes?.let {
+                        append(" • ")
+                        append("${it} menit")
+                    }
+                }
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            val metrics = buildList {
+                activity.caloriesBurned?.let { add("${it} kkal") }
+                activity.distanceKm?.let { add(String.format(Locale.getDefault(), "%.1f km", it)) }
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                metrics.forEach { metric ->
+                    MetricChip(
+                        text = metric,
+                        background = Color.White.copy(alpha = 0.9f),
+                        textColor = ActivityAccentColor
+                    )
+                }
             }
         }
     }
@@ -422,33 +840,61 @@ private fun ActivityRow(activity: ActivityEntry) {
 
 @Composable
 private fun MealRow(food: FoodEntry) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(food.name.ifBlank { "Tanpa nama" }, fontWeight = FontWeight.SemiBold)
-                val subtitle = buildString {
-                    append(Formatters.formatTime(food.timestamp))
-                    food.notes?.takeIf { it.isNotBlank() }?.let {
-                        append(" • ")
-                        append(it)
-                    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MealAccentColor.copy(alpha = 0.11f)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = food.name.ifBlank { "Tanpa nama" }.take(1).uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        color = FabColor
+                    )
                 }
-                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(food.name.ifBlank { "Tanpa nama" }, fontWeight = FontWeight.SemiBold)
+                    val subtitle = buildString {
+                        append(Formatters.formatTime(food.timestamp))
+                        food.notes?.takeIf { it.isNotBlank() }?.let {
+                            append(" • ")
+                            append(it)
+                        }
+                    }
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Text(
+                    text = "${food.calories} kkal",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = FabColor
+                )
             }
             val macros = buildList {
-                add("${food.calories} kkal")
                 food.protein?.let { add("${it}g protein") }
                 food.carbs?.let { add("${it}g karbohidrat") }
                 food.fat?.let { add("${it}g lemak") }
             }
-            Column(horizontalAlignment = Alignment.End) {
-                macros.forEachIndexed { index, item ->
-                    val spacer = if (index == macros.lastIndex) 0.dp else 2.dp
-                    Text(item, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = spacer))
+            if (macros.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    macros.forEach { item ->
+                        MetricChip(text = item)
+                    }
                 }
             }
         }
@@ -456,9 +902,68 @@ private fun MealRow(food: FoodEntry) {
 }
 
 @Composable
-private fun FabMenuItem(label: String, onClick: () -> Unit) {
-    DropdownMenuItem(text = { Text(label) }, onClick = onClick)
+private fun MetricChip(
+    text: String,
+    background: Color = Color.White.copy(alpha = 0.9f),
+    textColor: Color = FabColor
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(text, style = MaterialTheme.typography.labelSmall, color = textColor)
+    }
 }
+
+@Composable
+private fun FabMenuItem(action: FabMenuAction) {
+    DropdownMenuItem(
+        text = {
+            Column {
+                Text(
+                    text = action.title,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = action.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        leadingIcon = {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(action.iconBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = action.icon,
+                    contentDescription = null,
+                    tint = action.iconTint
+                )
+            }
+        },
+        onClick = action.onClick,
+        colors = MenuDefaults.itemColors(
+            textColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
+}
+
+private data class FabMenuAction(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val iconTint: Color = FabColor,
+    val iconBackground: Color = FabColor.copy(alpha = 0.12f),
+    val onClick: () -> Unit
+)
 
 private data class MacroRowData(
     val label: String,
@@ -469,6 +974,25 @@ private data class MacroRowData(
 ) {
     val progress: Float get() = if (target <= 0f) 0f else current / target
 }
+
+private data class TargetEntry(
+    val template: TargetTemplate,
+    val value: Float?
+) {
+    fun displayValue(): String = value?.let {
+        "${formatTargetValue(it, template.allowDecimal)} ${template.unit}"
+    } ?: "Belum diatur"
+}
+
+private data class TargetTemplate(
+    val id: String,
+    val title: String,
+    val subtitle: String,
+    val unit: String,
+    val icon: ImageVector,
+    val accent: Color,
+    val allowDecimal: Boolean = false
+)
 
 private fun macroOverview(foods: List<FoodEntry>): List<MacroRowData> {
     val protein = foods.sumOf { it.protein ?: 0 }
@@ -483,6 +1007,33 @@ private fun macroOverview(foods: List<FoodEntry>): List<MacroRowData> {
 
 private fun formatMacroValue(value: Float, unit: String): String =
     if (unit == "L") String.format(Locale.getDefault(), "%.1f", value) else value.toInt().toString()
+
+private fun formatTargetValue(value: Float, allowDecimal: Boolean): String =
+    if (allowDecimal) {
+        String.format(Locale.getDefault(), "%.1f", value).trimEnd('0').trimEnd('.')
+    } else {
+        value.roundToInt().toString()
+    }
+
+private fun formatTargetInput(value: Float, allowDecimal: Boolean): String =
+    formatTargetValue(value, allowDecimal)
+
+private fun sanitizeNumericInput(input: String, allowDecimal: Boolean): String {
+    if (input.isBlank()) return ""
+    val builder = StringBuilder()
+    var hasDecimal = false
+    input.forEach { char ->
+        when {
+            char.isDigit() -> builder.append(char)
+            allowDecimal && char == '.' && !hasDecimal -> {
+                if (builder.isEmpty()) builder.append('0')
+                builder.append('.')
+                hasDecimal = true
+            }
+        }
+    }
+    return builder.toString()
+}
 
 private fun FoodEntry.isToday(): Boolean = isTodayTimestamp(timestamp)
 
@@ -506,10 +1057,50 @@ private fun greetingMessage(): String {
 
 private const val DAY_IN_MILLIS = 24 * 60 * 60 * 1000L
 private val HomeGradientTop = Color(0xFF00897B)
-private val HomeGradientBottom = Color(0xFF26A69A)
+private val HomeGradientBottom = Color(0xFF00897B)
 private val GoalGradientStart = Color(0xFF0F9B8E)
 private val GoalGradientEnd = Color(0xFF2BC0A4)
 private val FabColor = Color(0xFF00897B)
 private val MacroPurple = Color(0xFF5C6BC0)
 private val MacroGold = Color(0xFFFFB74D)
 private val MacroGreen = Color(0xFF26A69A)
+private val MealAccentColor = Color(0xFF26A69A)
+private val ActivityAccentColor = Color(0xFF5C6BC0)
+private val TargetTimeColor = Color(0xFF7E57C2)
+private val TargetDistanceColor = Color(0xFF42A5F5)
+
+private val TargetTemplates = listOf(
+    TargetTemplate(
+        id = TargetIds.CalorieIn,
+        title = "Kalori Masuk",
+        subtitle = "Batas konsumsi harian",
+        unit = "kkal",
+        icon = Icons.Filled.Restaurant,
+        accent = MealAccentColor
+    ),
+    TargetTemplate(
+        id = TargetIds.CalorieOut,
+        title = "Kalori Terbakar",
+        subtitle = "Target olahraga harian",
+        unit = "kkal",
+        icon = Icons.Filled.LocalFireDepartment,
+        accent = ActivityAccentColor
+    ),
+    TargetTemplate(
+        id = TargetIds.Duration,
+        title = "Durasi Aktivitas",
+        subtitle = "Menit aktif setiap hari",
+        unit = "menit",
+        icon = Icons.Filled.Schedule,
+        accent = TargetTimeColor
+    ),
+    TargetTemplate(
+        id = TargetIds.Distance,
+        title = "Jarak Tempuh",
+        subtitle = "Kilometer per hari",
+        unit = "km",
+        icon = Icons.Filled.Flag,
+        accent = TargetDistanceColor,
+        allowDecimal = true
+    )
+)

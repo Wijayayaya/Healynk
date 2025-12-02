@@ -52,7 +52,8 @@ fun MainShell(
     onRestoreActivity: (ActivityEntry) -> Unit,
     onRestoreFood: (FoodEntry) -> Unit,
     onUploadPhoto: (Uri) -> Unit,
-    onUpdateBurnGoal: (Int) -> Unit
+    onUpdateBurnGoal: (Int) -> Unit,
+    onUpdateTargetGoal: (String, Float) -> Unit
 ) {
     val navController = rememberNavController()
     Scaffold(
@@ -119,7 +120,8 @@ fun MainShell(
                     onAddMeasurement = onAddMeasurement,
                     onAddBodyStats = onAddBodyStats,
                     onAddActivity = onAddActivity,
-                    onAddFood = onAddFood
+                    onAddFood = onAddFood,
+                    onUpdateTargetGoal = onUpdateTargetGoal
                 )
             }
             composable(Constants.ROUTE_HISTORY) {
